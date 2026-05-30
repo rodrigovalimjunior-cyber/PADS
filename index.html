@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worship Pads</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #a78bfa;
+            --accent2: #60a5fa;
+            --bg-from: #0f0c29;
+            --bg-mid: #1a1040;
+            --bg-to: #24243e;
+            --surface: rgba(255,255,255,0.05);
+            --surface-hover: rgba(255,255,255,0.09);
+            --border: rgba(255,255,255,0.1);
+            --border-active: rgba(167,139,250,0.6);
+            --text: #f1f0ff;
+            --text-muted: rgba(241,240,255,0.45);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-from) 0%, var(--bg-mid) 45%, var(--bg-to) 100%);
+            background-attachment: fixed;
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 70% 55% at 15% 20%, rgba(167,139,250,0.13) 0%, transparent 55%),
+                radial-gradient(ellipse 55% 45% at 85% 75%, rgba(96,165,250,0.10) 0%, transparent 55%),
+                radial-gradient(ellipse 40% 40% at 55% 50%, rgba(244,114,182,0.07) 0%, transparent 55%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        header {
+            position: relative;
+            z-index: 10;
+            padding: 3rem 1.5rem 1.5rem;
+            text-align: center;
+        }
+
+        .badge-pill {
+            display: inline-block;
+            background: rgba(167,139,250,0.15);
+            border: 1px solid rgba(167,139,250,0.3);
+            color: var(--accent);
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            padding: 0.3rem 0.9rem;
+            border-radius: 100px;
+            margin-bottom: 1.2rem;
+        }
+
+        header h1 {
+            font-size: clamp(2rem, 5.5vw, 3.8rem);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            background: linear-gradient(120deg, #e0d7ff 0%, var(--accent) 40%, var(--accent2) 80%, #f0abfc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 300;
+            letter-spacing: 0.02em;
+            margin-bottom: 2rem;
+        }
+
+        /* ── top controls row ── */
+        .controls {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            padding: 0 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .ctrl-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 0.45rem 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .ctrl-label {
+            font-size: 0.68rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .ctrl-value {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            min-width: 3rem;
+            text-align: right;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 3px;
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+        #volume-slider {
+            width: 110px;
+            background: linear-gradient(90deg, var(--accent) var(--pct,80%), rgba(255,255,255,0.12) var(--pct,80%));
+        }
+        #cutoff-slider {
+            width: 130px;
+            background: linear-gradient(90deg, #f472b6 var(--pct,100%), rgba(255,255,255,0.12) var(--pct,100%));
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            transition: box-shadow 0.15s;
+        }
+        #volume-slider::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(167,139,250,0.4); }
+        #cutoff-slider::-webkit-slider-thumb  { box-shadow: 0 0 0 3px rgba(244,114,182,0.4); }
+        input[type=range]::-webkit-slider-thumb:hover { box-shadow: 0 0 0 5px rgba(167,139,250,0.5); }
+
+        /* ── filter panel ── */
+        .filter-panel {
+            position: relative;
+            z-index: 10;
+            max-width: 860px;
+            margin: 0 auto 2rem;
+            padding: 0 1.2rem;
+        }
+
+        .filter-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.2rem 1.4rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .filter-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .filter-title {
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .filter-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: #f472b6;
+            box-shadow: 0 0 6px #f472b6;
+        }
+
+        /* presets */
+        .presets {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 500;
+            padding: 0.3rem 0.85rem;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.18s;
+            letter-spacing: 0.04em;
+        }
+        .preset-btn:hover {
+            border-color: rgba(244,114,182,0.4);
+            color: #f472b6;
+        }
+        .preset-btn.active {
+            background: rgba(244,114,182,0.15);
+            border-color: #f472b6;
+            color: #f9a8d4;
+        }
+
+        /* cutoff row */
+        .cutoff-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .cutoff-label {
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        #cutoff-slider-big {
+            -webkit-appearance: none;
+            appearance: none;
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #f472b6 var(--pct,100%), rgba(255,255,255,0.1) var(--pct,100%));
+            outline: none;
+            cursor: pointer;
+        }
+        #cutoff-slider-big::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(244,114,182,0.45);
+            cursor: pointer;
+            transition: box-shadow 0.15s;
+        }
+        #cutoff-slider-big::-webkit-slider-thumb:hover {
+            box-shadow: 0 0 0 6px rgba(244,114,182,0.4);
+        }
+
+        .cutoff-val {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.72rem;
+            color: #f472b6;
+            min-width: 4.5rem;
+            text-align: right;
+        }
+
+        /* viz */
+        .filter-viz {
+            margin-top: 1rem;
+            height: 48px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.2);
+        }
+
+        /* ── status ── */
+        #status-bar {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            height: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        #status-text {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            color: var(--accent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #status-text.visible { opacity: 1; }
+
+        /* ── grid ── */
+        #pad-grid {
+            position: relative;
+            z-index: 10;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 0.75rem;
+            max-width: 860px;
+            margin: 0 auto 4rem;
+            padding: 0 1.2rem;
+        }
+
+        .pad-card {
+            position: relative;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.4rem 0.8rem 1.1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s, background 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            user-select: none;
+        }
+        .pad-card:hover {
+            background: var(--surface-hover);
+            border-color: rgba(167,139,250,0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.3);
+        }
+        .pad-card.playing {
+            background: rgba(167,139,250,0.12);
+            border-color: var(--border-active);
+            transform: translateY(-4px);
+            box-shadow: 0 0 0 1px rgba(167,139,250,0.2), 0 16px 40px rgba(167,139,250,0.15), 0 8px 24px rgba(0,0,0,0.4);
+        }
+        .pad-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 60%;
+            background: radial-gradient(ellipse at 50% 0%, rgba(167,139,250,0.15) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            border-radius: inherit;
+            pointer-events: none;
+        }
+        .pad-card:hover::before, .pad-card.playing::before { opacity: 1; }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(167,139,250,0.25);
+            transform: scale(0);
+            animation: ripple-out 0.6s ease-out forwards;
+            pointer-events: none;
+        }
+        @keyframes ripple-out { to { transform: scale(5); opacity: 0; } }
+
+        .note-ring {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 52px; height: 52px;
+            margin: 0 auto 0.7rem;
+            border-radius: 50%;
+            border: 1.5px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .pad-card.playing .note-ring {
+            border-color: var(--accent);
+            background: rgba(167,139,250,0.15);
+        }
+        .pad-card.playing .note-ring::after {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 50%;
+            border: 1px solid var(--accent);
+            animation: ring-pulse 1.6s ease-out infinite;
+            opacity: 0.6;
+        }
+        @keyframes ring-pulse {
+            0%   { transform: scale(0.9); opacity: 0.6; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        .note-key {
+            font-family: 'DM Mono', monospace;
+            font-size: 1.05rem;
+            font-weight: 500;
+            color: var(--text);
+            transition: color 0.2s;
+        }
+        .pad-card.playing .note-key { color: var(--accent); }
+
+        .note-label {
+            font-size: 0.68rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            letter-spacing: 0.06em;
+            margin-bottom: 0.85rem;
+        }
+
+        .waves {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 3px;
+            height: 16px;
+            margin-bottom: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .pad-card.playing .waves { opacity: 1; }
+        .wave-bar {
+            width: 3px;
+            border-radius: 2px;
+            background: linear-gradient(to top, var(--accent), var(--accent2));
+            animation: wave-dance var(--spd) ease-in-out infinite alternate;
+        }
+        @keyframes wave-dance {
+            from { transform: scaleY(0.15); }
+            to   { transform: scaleY(1); }
+        }
+
+        .btn-pad {
+            display: block;
+            width: 100%;
+            padding: 0.4rem 0;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .pad-card:hover .btn-pad { border-color: rgba(167,139,250,0.4); color: var(--accent); }
+        .pad-card.playing .btn-pad { background: rgba(167,139,250,0.2); border-color: var(--accent); color: var(--accent); }
+
+        footer {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 1.2rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+        }
+
+        .transport-btns {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-transport {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            padding: 0.5rem 1.2rem;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-muted);
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.18s;
+        }
+        .btn-transport:hover { background: var(--surface-hover); }
+        .btn-transport:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .btn-stop-fade:hover:not(:disabled) {
+            background: rgba(167,139,250,0.12);
+            border-color: rgba(167,139,250,0.5);
+            color: var(--accent);
+        }
+        .btn-break:hover:not(:disabled) {
+            background: rgba(248,113,113,0.12);
+            border-color: rgba(248,113,113,0.5);
+            color: #f87171;
+        }
+
+        .btn-break .dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #f87171;
+            box-shadow: 0 0 6px #f87171;
+        }
+        .btn-stop-fade .dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 6px var(--accent);
+        }
+
+        #break-flash {
+            position: fixed;
+            inset: 0;
+            background: rgba(248,113,113,0.08);
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0;
+        }
+        #break-flash.flash { animation: flash-out 0.35s ease-out forwards; }
+        @keyframes flash-out { 0% { opacity: 1; } 100% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="badge-pill">Heavenly Textures</div>
+    <h1>Worship Pads</h1>
+    <p class="subtitle">Pads Contínuos — todas as tonalidades</p>
+</header>
+
+<div id="status-bar"><span id="status-text"></span></div>
+
+<!-- volume -->
+<div class="controls">
+    <div class="ctrl-pill">
+        <span class="ctrl-label">Volume</span>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.8">
+        <span class="ctrl-value" id="vol-pct">80%</span>
+    </div>
+</div>
+
+<!-- filter panel -->
+<div class="filter-panel">
+    <div class="filter-box">
+        <div class="filter-header">
+            <span class="filter-title">
+                <span class="filter-dot"></span>
+                Filtro Lowpass — Cutoff
+            </span>
+            <div class="presets">
+                <button class="preset-btn" data-freq="300">Dark</button>
+                <button class="preset-btn" data-freq="800">Warm</button>
+                <button class="preset-btn active" data-freq="20000">Bright</button>
+                <button class="preset-btn" data-freq="1200">Soft</button>
+                <button class="preset-btn" data-freq="5000">Air</button>
+            </div>
+        </div>
+        <div class="cutoff-row">
+            <span class="cutoff-label">Cutoff</span>
+            <input type="range" id="cutoff-slider-big" min="80" max="20000" step="1" value="20000">
+            <span class="cutoff-val" id="cutoff-val">20 kHz</span>
+        </div>
+        <canvas class="filter-viz" id="filter-viz" width="820" height="48"></canvas>
+    </div>
+</div>
+
+<div id="pad-grid"></div>
+
+<div class="transport-btns">
+    <button class="btn-transport btn-stop-fade" id="btn-stop-fade" disabled><span class="dot"></span> Stop (fade)</button>
+    <button class="btn-transport btn-break" id="btn-break" disabled><span class="dot"></span> Break</button>
+</div>
+
+<div id="break-flash"></div>
+
+<footer>Worship Pads · DIGUIN</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+<script>
+// ── Web Audio setup ──────────────────────────────────
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+const masterGain = ctx.createGain();
+const filterNode = ctx.createBiquadFilter();
+filterNode.type = 'lowpass';
+filterNode.frequency.value = 20000;
+filterNode.Q.value = 0.8;
+filterNode.connect(masterGain);
+masterGain.connect(ctx.destination);
+masterGain.gain.value = 0.8;
+
+// ── Pads data ────────────────────────────────────────
+const pads_at = [
+    { key: 'C',  label: 'Dó',   file: 'C.mp3' },
+    { key: 'C#', label: 'Dó♯',  file: 'Cs.mp3' },
+
+    { key: 'D',  label: 'Ré',   file: 'D.mp3' },
+    { key: 'D#', label: 'Ré♯',  file: 'Ds.mp3' },
+
+    { key: 'E',  label: 'Mi',   file: 'E.mp3' },
+
+    { key: 'F',  label: 'Fá',   file: 'F.mp3' },
+    { key: 'F#', label: 'Fá♯',  file: 'Fs.mp3' },
+
+    { key: 'G',  label: 'Sol',  file: 'G.mp3' },
+    { key: 'G#', label: 'Sol♯', file: 'Gs.mp3' },
+
+    { key: 'A',  label: 'Lá',   file: 'A.mp3' },
+    { key: 'A#', label: 'Lá♯',  file: 'As.mp3' },
+
+    { key: 'B',  label: 'Si',   file: 'B.mp3' }
+];
+
+// ── Audio nodes per pad ──────────────────────────────
+// Each pad: { element: HTMLAudioElement, source: MediaElementSource }
+const padNodes = {};
+let currentKey = null;
+let volume = 0.8;
+const FADE_IN = 1.0;
+const FADE_OUT = 1.8;
+
+function getNode(key) {
+    if (!padNodes[key]) {
+        const el = new Audio(pads_at.find(p => p.key === key).file);
+        el.loop = true;
+        el.crossOrigin = 'anonymous';
+        const source = ctx.createMediaElementSource(el);
+        source.connect(filterNode);
+        padNodes[key] = { el, source };
+    }
+    return padNodes[key];
+}
+
+function fadeIn(key) {
+    const { el } = getNode(key);
+    el.volume = 0;
+    ctx.resume();
+    el.play().catch(() => {});
+    const target = volume;
+    const step = target / (FADE_IN * 60);
+    const id = setInterval(() => {
+        if (el.volume + step >= target) { el.volume = target; clearInterval(id); }
+        else el.volume += step;
+    }, 1000/60);
+}
+
+function fadeOut(key, onDone) {
+    const { el } = getNode(key);
+    const start = el.volume;
+    const step = start / (FADE_OUT * 60);
+    const id = setInterval(() => {
+        if (el.volume - step <= 0) {
+            el.volume = 0; el.pause(); el.currentTime = 0;
+            clearInterval(id); onDone && onDone();
+        } else el.volume -= step;
+    }, 1000/60);
+}
+
+// ── Build grid ───────────────────────────────────────
+const grid = document.getElementById('pad-grid');
+const waveSpeeds = [0.42, 0.58, 0.35, 0.5, 0.68];
+
+pads_at.forEach(pad => {
+    const card = document.createElement('div');
+    card.className = 'pad-card';
+    card.id = `card-${pad.key.replace('#','s')}`;
+    const waveHTML = waveSpeeds.map(s =>
+        `<div class="wave-bar" style="height:${7+Math.random()*9}px;--spd:${s}s"></div>`
+    ).join('');
+    card.innerHTML = `
+        <div class="note-ring"><span class="note-key">${pad.key}</span></div>
+        <div class="note-label">${pad.label}</div>
+        <div class="waves">${waveHTML}</div>
+        <button class="btn-pad">▶ Play</button>
+    `;
+    card.addEventListener('click', e => { ripple(card, e); toggle(pad.key); });
+    grid.appendChild(card);
+});
+
+function ripple(card, e) {
+    const r = card.getBoundingClientRect();
+    const el = document.createElement('div');
+    el.className = 'ripple';
+    const x = (e.clientX - r.left) || r.width/2;
+    const y = (e.clientY - r.top)  || r.height/2;
+    el.style.cssText = `left:${x}px;top:${y}px;width:50px;height:50px;margin:-25px 0 0 -25px`;
+    card.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+}
+
+const btnStopFade = document.getElementById('btn-stop-fade');
+const btnBreak    = document.getElementById('btn-break');
+const breakFlash  = document.getElementById('break-flash');
+
+function setTransportEnabled(enabled) {
+    btnStopFade.disabled = !enabled;
+    btnBreak.disabled    = !enabled;
+}
+
+function clearCurrentCard() {
+    if (!currentKey) return;
+    const prev = document.getElementById(`card-${currentKey.replace('#','s')}`);
+    if (prev) {
+        prev.classList.remove('playing');
+        prev.querySelector('.btn-pad').textContent = '▶ Play';
+    }
+    currentKey = null;
+    setTransportEnabled(false);
+}
+
+btnStopFade.addEventListener('click', () => {
+    if (!currentKey) return;
+    const key = currentKey;
+    fadeOut(key);
+    clearCurrentCard();
+    setStatus(`${key} — fade out`);
+});
+
+btnBreak.addEventListener('click', () => {
+    if (!currentKey) return;
+    const key = currentKey;
+    const { el } = padNodes[key];
+    el.volume = 0;
+    el.pause();
+    el.currentTime = 0;
+    // flash
+    breakFlash.classList.remove('flash');
+    void breakFlash.offsetWidth;
+    breakFlash.classList.add('flash');
+    clearCurrentCard();
+    setStatus(`${key} — break!`);
+});
+
+function toggle(key) {
+    const cid = `card-${key.replace('#','s')}`;
+    const card = document.getElementById(cid);
+    const btn = card.querySelector('.btn-pad');
+    if (currentKey === key) {
+        fadeOut(key);
+        card.classList.remove('playing');
+        btn.textContent = '▶ Play';
+        setStatus(`${key} — parado`);
+        currentKey = null;
+        setTransportEnabled(false);
+    } else {
+        if (currentKey) {
+            const prev = document.getElementById(`card-${currentKey.replace('#','s')}`);
+            prev.classList.remove('playing');
+            prev.querySelector('.btn-pad').textContent = '▶ Play';
+            fadeOut(currentKey);
+        }
+        fadeIn(key);
+        card.classList.add('playing');
+        btn.textContent = '■ Stop';
+        setStatus(`♪ Tocando ${key}`);
+        currentKey = key;
+        setTransportEnabled(true);
+    }
+}
+
+function setStatus(msg) {
+    const el = document.getElementById('status-text');
+    el.textContent = msg;
+    el.classList.add('visible');
+    clearTimeout(setStatus._t);
+    setStatus._t = setTimeout(() => el.classList.remove('visible'), 3000);
+}
+
+// ── Volume ───────────────────────────────────────────
+const volSlider = document.getElementById('volume-slider');
+const volPct = document.getElementById('vol-pct');
+volSlider.addEventListener('input', () => {
+    volume = parseFloat(volSlider.value);
+    const pct = Math.round(volume * 100);
+    volPct.textContent = `${pct}%`;
+    volSlider.style.setProperty('--pct', pct + '%');
+    masterGain.gain.setTargetAtTime(volume, ctx.currentTime, 0.05);
+    if (currentKey) padNodes[currentKey].el.volume = volume;
+});
+volSlider.style.setProperty('--pct', '80%');
+
+// ── Filter ───────────────────────────────────────────
+const cutoffSlider = document.getElementById('cutoff-slider-big');
+const cutoffVal    = document.getElementById('cutoff-val');
+
+function formatFreq(f) {
+    if (f >= 1000) return (f/1000).toFixed(f >= 10000 ? 0 : 1) + ' kHz';
+    return Math.round(f) + ' Hz';
+}
+
+function setCutoff(freq, smooth) {
+    if (smooth) filterNode.frequency.setTargetAtTime(freq, ctx.currentTime, 0.05);
+    else filterNode.frequency.value = freq;
+    cutoffVal.textContent = formatFreq(freq);
+    const log = (Math.log(freq) - Math.log(80)) / (Math.log(20000) - Math.log(80));
+    cutoffSlider.value = freq;
+    cutoffSlider.style.setProperty('--pct', (log * 100).toFixed(1) + '%');
+    drawViz(freq);
+    // update preset active state
+    document.querySelectorAll('.preset-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.freq) === freq);
+    });
+}
+
+cutoffSlider.addEventListener('input', () => {
+    const freq = parseFloat(cutoffSlider.value);
+    setCutoff(freq, true);
+    const log = (Math.log(freq) - Math.log(80)) / (Math.log(20000) - Math.log(80));
+    cutoffSlider.style.setProperty('--pct', (log * 100).toFixed(1) + '%');
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+});
+
+document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const freq = parseInt(btn.dataset.freq);
+        setCutoff(freq, true);
+    });
+});
+
+// ── Filter viz (frequency response curve) ────────────
+const canvas = document.getElementById('filter-viz');
+const canCtx = canvas.getContext('2d');
+
+function drawViz(cutoff) {
+    const W = canvas.width, H = canvas.height;
+    canCtx.clearRect(0, 0, W, H);
+
+    // background grid lines
+    canCtx.strokeStyle = 'rgba(255,255,255,0.04)';
+    canCtx.lineWidth = 1;
+    [0.25, 0.5, 0.75].forEach(x => {
+        canCtx.beginPath();
+        canCtx.moveTo(x * W, 0);
+        canCtx.lineTo(x * W, H);
+        canCtx.stroke();
+    });
+
+    const logMin = Math.log(80), logMax = Math.log(20000);
+    const logCut = Math.log(Math.max(80, cutoff));
+
+    // draw response curve
+    canCtx.beginPath();
+    for (let px = 0; px <= W; px++) {
+        const t = px / W;
+        const freq = Math.exp(logMin + t * (logMax - logMin));
+        // simple 2-pole lowpass approximation
+        let gain;
+        if (freq <= cutoff) {
+            gain = 1;
+        } else {
+            const ratio = freq / cutoff;
+            gain = 1 / (1 + ratio * ratio);
+        }
+        const y = H - gain * (H - 4) - 2;
+        px === 0 ? canCtx.moveTo(0, y) : canCtx.lineTo(px, y);
+    }
+
+    // fill under curve
+    const cutX = ((logCut - logMin) / (logMax - logMin)) * W;
+    canCtx.lineTo(W, H);
+    canCtx.lineTo(0, H);
+    canCtx.closePath();
+    const grad = canCtx.createLinearGradient(0, 0, W, 0);
+    grad.addColorStop(0, 'rgba(244,114,182,0.3)');
+    grad.addColorStop(Math.min(cutX/W, 1), 'rgba(244,114,182,0.15)');
+    grad.addColorStop(1, 'rgba(244,114,182,0.02)');
+    canCtx.fillStyle = grad;
+    canCtx.fill();
+
+    // stroke line
+    canCtx.beginPath();
+    for (let px = 0; px <= W; px++) {
+        const t = px / W;
+        const freq = Math.exp(logMin + t * (logMax - logMin));
+        let gain;
+        if (freq <= cutoff) { gain = 1; }
+        else { const ratio = freq / cutoff; gain = 1 / (1 + ratio * ratio); }
+        const y = H - gain * (H - 4) - 2;
+        px === 0 ? canCtx.moveTo(0, y) : canCtx.lineTo(px, y);
+    }
+    canCtx.strokeStyle = '#f472b6';
+    canCtx.lineWidth = 1.5;
+    canCtx.stroke();
+
+    // cutoff marker line
+    canCtx.beginPath();
+    canCtx.moveTo(cutX, 0); canCtx.lineTo(cutX, H);
+    canCtx.strokeStyle = 'rgba(244,114,182,0.35)';
+    canCtx.lineWidth = 1;
+    canCtx.setLineDash([3, 3]);
+    canCtx.stroke();
+    canCtx.setLineDash([]);
+}
+
+// init
+drawViz(20000);
+cutoffSlider.style.setProperty('--pct', '100%');
+</script>
+</body>
+</html>
