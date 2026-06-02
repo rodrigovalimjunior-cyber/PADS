@@ -44,6 +44,53 @@
             z-index: 0;
         }
 
+        /* ── Loading overlay ── */
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, var(--bg-from) 0%, var(--bg-mid) 45%, var(--bg-to) 100%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            transition: opacity 0.6s ease;
+        }
+        #loading-overlay.fade-out { opacity: 0; pointer-events: none; }
+
+        .loading-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+
+        .loading-bar-wrap {
+            width: 240px;
+            height: 3px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .loading-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .loading-note {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.68rem;
+            color: rgba(167,139,250,0.5);
+            letter-spacing: 0.08em;
+            min-height: 1em;
+        }
+
         header {
             position: relative;
             z-index: 10;
@@ -138,10 +185,6 @@
             width: 110px;
             background: linear-gradient(90deg, var(--accent) var(--pct,80%), rgba(255,255,255,0.12) var(--pct,80%));
         }
-        #cutoff-slider {
-            width: 130px;
-            background: linear-gradient(90deg, #f472b6 var(--pct,100%), rgba(255,255,255,0.12) var(--pct,100%));
-        }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 14px; height: 14px;
@@ -151,7 +194,6 @@
             transition: box-shadow 0.15s;
         }
         #volume-slider::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(167,139,250,0.4); }
-        #cutoff-slider::-webkit-slider-thumb  { box-shadow: 0 0 0 3px rgba(244,114,182,0.4); }
         input[type=range]::-webkit-slider-thumb:hover { box-shadow: 0 0 0 5px rgba(167,139,250,0.5); }
 
         /* ── filter panel ── */
@@ -198,7 +240,6 @@
             box-shadow: 0 0 6px #f472b6;
         }
 
-        /* presets */
         .presets {
             display: flex;
             gap: 0.5rem;
@@ -228,7 +269,6 @@
             color: #f9a8d4;
         }
 
-        /* cutoff row */
         .cutoff-row {
             display: flex;
             align-items: center;
@@ -276,7 +316,6 @@
             text-align: right;
         }
 
-        /* viz */
         .filter-viz {
             margin-top: 1rem;
             height: 48px;
@@ -340,6 +379,14 @@
             transform: translateY(-4px);
             box-shadow: 0 0 0 1px rgba(167,139,250,0.2), 0 16px 40px rgba(167,139,250,0.15), 0 8px 24px rgba(0,0,0,0.4);
         }
+        /* Loading state — pads not yet ready */
+        .pad-card.not-ready {
+            opacity: 0.4;
+            cursor: wait;
+            pointer-events: none;
+        }
+        .pad-card.not-ready .btn-pad { color: var(--text-muted); }
+
         .pad-card::before {
             content: '';
             position: absolute;
@@ -528,6 +575,16 @@
 </head>
 <body>
 
+<!-- Loading overlay -->
+<div id="loading-overlay">
+    <div class="badge-pill" style="margin:0">Worship Pads</div>
+    <div class="loading-title">Carregando samples…</div>
+    <div class="loading-bar-wrap">
+        <div class="loading-bar-fill" id="loading-bar"></div>
+    </div>
+    <div class="loading-note" id="loading-note">iniciando…</div>
+</div>
+
 <header>
     <div class="badge-pill">Heavenly Textures</div>
     <h1>Worship Pads</h1>
@@ -596,69 +653,111 @@ masterGain.gain.value = 0.8;
 
 // ── Pads data ────────────────────────────────────────
 const pads_at = [
-    { key: 'C',  label: 'Dó',   file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/C.wav' },
-    { key: 'C#', label: 'Dó♯',  file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/Cs.wav' },
-
-    { key: 'D',  label: 'Ré',   file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/D.wav' },
-    { key: 'D#', label: 'Ré♯',  file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/Ds.wav' },
-
-    { key: 'E',  label: 'Mi',   file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/E.wav' },
-
-    { key: 'F',  label: 'Fá',   file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/F.wav' },
-    { key: 'F#', label: 'Fá♯',  file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/Fs.wav' },
-
-    { key: 'G',  label: 'Sol',  file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/G.wav' },
-    { key: 'G#', label: 'Sol♯', file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/Gs.wav' },
-
-    { key: 'A',  label: 'Lá',   file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/A.wav' },
-    { key: 'A#', label: 'Lá♯',  file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/As.wav' },
-
-    { key: 'B',  label: 'Si',   file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/B.wav' }
+    { key: 'C',  label: 'Dó',   file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/C.mp3' },
+    { key: 'C#', label: 'Dó♯',  file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/Cs.mp3' },
+    { key: 'D',  label: 'Ré',   file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/D.mp3' },
+    { key: 'D#', label: 'Ré♯',  file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/Ds.mp3' },
+    { key: 'E',  label: 'Mi',   file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/E.mp3' },
+    { key: 'F',  label: 'Fá',   file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/F.mp3' },
+    { key: 'F#', label: 'Fá♯',  file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/Fs.mp3' },
+    { key: 'G',  label: 'Sol',  file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/G.mp3' },
+    { key: 'G#', label: 'Sol♯', file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/Gs.mp3' },
+    { key: 'A',  label: 'Lá',   file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/A.mp3' },
+    { key: 'A#', label: 'Lá♯',  file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/As.mp3' },
+    { key: 'B',  label: 'Si',   file: 'https://pub-066407f76e5b43f0be86e97da18af089.r2.dev/B.mp3' }
 ];
 
-// ── Audio nodes per pad ──────────────────────────────
-// Each pad: { element: HTMLAudioElement, source: MediaElementSource }
-const padNodes = {};
-let currentKey = null;
-let volume = 0.8;
-const FADE_IN = 1.0;
-const FADE_OUT = 1.8;
+// ── AudioBuffer store (pre-decoded) ─────────────────
+// buffers[key] = AudioBuffer (null while loading)
+const buffers = {};
 
-function getNode(key) {
-    if (!padNodes[key]) {
-        const el = new Audio(pads_at.find(p => p.key === key).file);
-        el.loop = true;
-        el.crossOrigin = 'anonymous';
-        const source = ctx.createMediaElementSource(el);
-        source.connect(filterNode);
-        padNodes[key] = { el, source };
+// Active playback per pad:
+// active[key] = { source: AudioBufferSourceNode, gain: GainNode, startTime: number }
+const active = {};
+
+let currentKey  = null;
+let masterVolume = 0.8;
+const FADE_IN  = 1.0;   // seconds
+const FADE_OUT = 1.8;   // seconds
+
+// ── Pre-load all buffers ──────────────────────────────
+async function preloadAll() {
+    const loadingBar  = document.getElementById('loading-bar');
+    const loadingNote = document.getElementById('loading-note');
+    const total = pads_at.length;
+    let done = 0;
+
+    const promises = pads_at.map(async (pad) => {
+        try {
+            loadingNote.textContent = `Carregando ${pad.key}…`;
+            const resp = await fetch(pad.file);
+            const arrayBuf = await resp.arrayBuffer();
+            buffers[pad.key] = await ctx.decodeAudioData(arrayBuf);
+        } catch(e) {
+            console.warn(`Falha ao carregar ${pad.key}:`, e);
+            buffers[pad.key] = null;
+        }
+        done++;
+        const pct = Math.round((done / total) * 100);
+        loadingBar.style.width = pct + '%';
+        loadingNote.textContent = `${pad.key} pronto  (${pct}%)`;
+
+        // unlock each card as it loads
+        const cid = `card-${pad.key.replace('#','s')}`;
+        const card = document.getElementById(cid);
+        if (card) card.classList.remove('not-ready');
+    });
+
+    await Promise.all(promises);
+
+    loadingNote.textContent = 'Pronto!';
+    setTimeout(() => {
+        const overlay = document.getElementById('loading-overlay');
+        overlay.classList.add('fade-out');
+        setTimeout(() => overlay.remove(), 700);
+    }, 400);
+}
+
+// ── Playback helpers ─────────────────────────────────
+function startPad(key) {
+    if (!buffers[key]) return;
+
+    // Create pad-level gain node for fade control
+    const padGain = ctx.createGain();
+    padGain.gain.setValueAtTime(0, ctx.currentTime);
+    padGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + FADE_IN);
+    padGain.connect(filterNode);
+
+    // BufferSource: zero-latency, already decoded
+    const source = ctx.createBufferSource();
+    source.buffer = buffers[key];
+    source.loop = true;
+    source.connect(padGain);
+    source.start(0);
+
+    active[key] = { source, gain: padGain };
+}
+
+function stopPad(key, instant, onDone) {
+    const node = active[key];
+    if (!node) { onDone && onDone(); return; }
+
+    const { source, gain } = node;
+    delete active[key];
+
+    if (instant) {
+        gain.gain.cancelScheduledValues(ctx.currentTime);
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        source.stop(ctx.currentTime + 0.01);
+        onDone && onDone();
+    } else {
+        const now = ctx.currentTime;
+        gain.gain.cancelScheduledValues(now);
+        gain.gain.setValueAtTime(gain.gain.value, now);
+        gain.gain.linearRampToValueAtTime(0, now + FADE_OUT);
+        source.stop(ctx.currentTime + FADE_OUT + 0.05);
+        onDone && setTimeout(onDone, (FADE_OUT + 0.1) * 1000);
     }
-    return padNodes[key];
-}
-
-function fadeIn(key) {
-    const { el } = getNode(key);
-    el.volume = 0;
-    ctx.resume();
-    el.play().catch(() => {});
-    const target = volume;
-    const step = target / (FADE_IN * 60);
-    const id = setInterval(() => {
-        if (el.volume + step >= target) { el.volume = target; clearInterval(id); }
-        else el.volume += step;
-    }, 1000/60);
-}
-
-function fadeOut(key, onDone) {
-    const { el } = getNode(key);
-    const start = el.volume;
-    const step = start / (FADE_OUT * 60);
-    const id = setInterval(() => {
-        if (el.volume - step <= 0) {
-            el.volume = 0; el.pause(); el.currentTime = 0;
-            clearInterval(id); onDone && onDone();
-        } else el.volume -= step;
-    }, 1000/60);
 }
 
 // ── Build grid ───────────────────────────────────────
@@ -667,7 +766,7 @@ const waveSpeeds = [0.42, 0.58, 0.35, 0.5, 0.68];
 
 pads_at.forEach(pad => {
     const card = document.createElement('div');
-    card.className = 'pad-card';
+    card.className = 'pad-card not-ready'; // locked until buffer ready
     card.id = `card-${pad.key.replace('#','s')}`;
     const waveHTML = waveSpeeds.map(s =>
         `<div class="wave-bar" style="height:${7+Math.random()*9}px;--spd:${s}s"></div>`
@@ -702,61 +801,56 @@ function setTransportEnabled(enabled) {
     btnBreak.disabled    = !enabled;
 }
 
-function clearCurrentCard() {
-    if (!currentKey) return;
-    const prev = document.getElementById(`card-${currentKey.replace('#','s')}`);
-    if (prev) {
-        prev.classList.remove('playing');
-        prev.querySelector('.btn-pad').textContent = '▶ Play';
-    }
-    currentKey = null;
-    setTransportEnabled(false);
+function setCardPlaying(key, playing) {
+    const card = document.getElementById(`card-${key.replace('#','s')}`);
+    if (!card) return;
+    card.classList.toggle('playing', playing);
+    card.querySelector('.btn-pad').textContent = playing ? '■ Stop' : '▶ Play';
 }
 
 btnStopFade.addEventListener('click', () => {
     if (!currentKey) return;
     const key = currentKey;
-    fadeOut(key);
-    clearCurrentCard();
+    stopPad(key, false);
+    setCardPlaying(key, false);
+    currentKey = null;
+    setTransportEnabled(false);
     setStatus(`${key} — fade out`);
 });
 
 btnBreak.addEventListener('click', () => {
     if (!currentKey) return;
     const key = currentKey;
-    const { el } = padNodes[key];
-    el.volume = 0;
-    el.pause();
-    el.currentTime = 0;
+    stopPad(key, true);
+    setCardPlaying(key, false);
     // flash
     breakFlash.classList.remove('flash');
     void breakFlash.offsetWidth;
     breakFlash.classList.add('flash');
-    clearCurrentCard();
+    currentKey = null;
+    setTransportEnabled(false);
     setStatus(`${key} — break!`);
 });
 
 function toggle(key) {
-    const cid = `card-${key.replace('#','s')}`;
-    const card = document.getElementById(cid);
-    const btn = card.querySelector('.btn-pad');
+    ctx.resume(); // unblock autoplay policy on first interaction
+
     if (currentKey === key) {
-        fadeOut(key);
-        card.classList.remove('playing');
-        btn.textContent = '▶ Play';
+        // stop current
+        stopPad(key, false);
+        setCardPlaying(key, false);
         setStatus(`${key} — parado`);
         currentKey = null;
         setTransportEnabled(false);
     } else {
+        // fade out previous
         if (currentKey) {
-            const prev = document.getElementById(`card-${currentKey.replace('#','s')}`);
-            prev.classList.remove('playing');
-            prev.querySelector('.btn-pad').textContent = '▶ Play';
-            fadeOut(currentKey);
+            stopPad(currentKey, false);
+            setCardPlaying(currentKey, false);
         }
-        fadeIn(key);
-        card.classList.add('playing');
-        btn.textContent = '■ Stop';
+        // start new — instant, no network wait
+        startPad(key);
+        setCardPlaying(key, true);
         setStatus(`♪ Tocando ${key}`);
         currentKey = key;
         setTransportEnabled(true);
@@ -773,20 +867,19 @@ function setStatus(msg) {
 
 // ── Volume ───────────────────────────────────────────
 const volSlider = document.getElementById('volume-slider');
-const volPct = document.getElementById('vol-pct');
+const volPct    = document.getElementById('vol-pct');
 volSlider.addEventListener('input', () => {
-    volume = parseFloat(volSlider.value);
-    const pct = Math.round(volume * 100);
+    masterVolume = parseFloat(volSlider.value);
+    const pct = Math.round(masterVolume * 100);
     volPct.textContent = `${pct}%`;
     volSlider.style.setProperty('--pct', pct + '%');
-    masterGain.gain.setTargetAtTime(volume, ctx.currentTime, 0.05);
-    if (currentKey) padNodes[currentKey].el.volume = volume;
+    masterGain.gain.setTargetAtTime(masterVolume, ctx.currentTime, 0.05);
 });
 volSlider.style.setProperty('--pct', '80%');
 
 // ── Filter ───────────────────────────────────────────
 const cutoffSlider = document.getElementById('cutoff-slider-big');
-const cutoffVal    = document.getElementById('cutoff-val');
+const cutoffValEl  = document.getElementById('cutoff-val');
 
 function formatFreq(f) {
     if (f >= 1000) return (f/1000).toFixed(f >= 10000 ? 0 : 1) + ' kHz';
@@ -796,12 +889,11 @@ function formatFreq(f) {
 function setCutoff(freq, smooth) {
     if (smooth) filterNode.frequency.setTargetAtTime(freq, ctx.currentTime, 0.05);
     else filterNode.frequency.value = freq;
-    cutoffVal.textContent = formatFreq(freq);
+    cutoffValEl.textContent = formatFreq(freq);
     const log = (Math.log(freq) - Math.log(80)) / (Math.log(20000) - Math.log(80));
     cutoffSlider.value = freq;
     cutoffSlider.style.setProperty('--pct', (log * 100).toFixed(1) + '%');
     drawViz(freq);
-    // update preset active state
     document.querySelectorAll('.preset-btn').forEach(b => {
         b.classList.toggle('active', parseInt(b.dataset.freq) === freq);
     });
@@ -816,55 +908,36 @@ cutoffSlider.addEventListener('input', () => {
 });
 
 document.querySelectorAll('.preset-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const freq = parseInt(btn.dataset.freq);
-        setCutoff(freq, true);
-    });
+    btn.addEventListener('click', () => setCutoff(parseInt(btn.dataset.freq), true));
 });
 
-// ── Filter viz (frequency response curve) ────────────
+// ── Filter viz ───────────────────────────────────────
 const canvas = document.getElementById('filter-viz');
-const canCtx = canvas.getContext('2d');
+const canCtx  = canvas.getContext('2d');
 
 function drawViz(cutoff) {
     const W = canvas.width, H = canvas.height;
     canCtx.clearRect(0, 0, W, H);
-
-    // background grid lines
     canCtx.strokeStyle = 'rgba(255,255,255,0.04)';
     canCtx.lineWidth = 1;
     [0.25, 0.5, 0.75].forEach(x => {
         canCtx.beginPath();
-        canCtx.moveTo(x * W, 0);
-        canCtx.lineTo(x * W, H);
+        canCtx.moveTo(x * W, 0); canCtx.lineTo(x * W, H);
         canCtx.stroke();
     });
-
     const logMin = Math.log(80), logMax = Math.log(20000);
     const logCut = Math.log(Math.max(80, cutoff));
 
-    // draw response curve
     canCtx.beginPath();
     for (let px = 0; px <= W; px++) {
         const t = px / W;
         const freq = Math.exp(logMin + t * (logMax - logMin));
-        // simple 2-pole lowpass approximation
-        let gain;
-        if (freq <= cutoff) {
-            gain = 1;
-        } else {
-            const ratio = freq / cutoff;
-            gain = 1 / (1 + ratio * ratio);
-        }
+        let gain = freq <= cutoff ? 1 : 1 / (1 + (freq/cutoff) ** 2);
         const y = H - gain * (H - 4) - 2;
         px === 0 ? canCtx.moveTo(0, y) : canCtx.lineTo(px, y);
     }
-
-    // fill under curve
     const cutX = ((logCut - logMin) / (logMax - logMin)) * W;
-    canCtx.lineTo(W, H);
-    canCtx.lineTo(0, H);
-    canCtx.closePath();
+    canCtx.lineTo(W, H); canCtx.lineTo(0, H); canCtx.closePath();
     const grad = canCtx.createLinearGradient(0, 0, W, 0);
     grad.addColorStop(0, 'rgba(244,114,182,0.3)');
     grad.addColorStop(Math.min(cutX/W, 1), 'rgba(244,114,182,0.15)');
@@ -872,14 +945,11 @@ function drawViz(cutoff) {
     canCtx.fillStyle = grad;
     canCtx.fill();
 
-    // stroke line
     canCtx.beginPath();
     for (let px = 0; px <= W; px++) {
         const t = px / W;
         const freq = Math.exp(logMin + t * (logMax - logMin));
-        let gain;
-        if (freq <= cutoff) { gain = 1; }
-        else { const ratio = freq / cutoff; gain = 1 / (1 + ratio * ratio); }
+        let gain = freq <= cutoff ? 1 : 1 / (1 + (freq/cutoff) ** 2);
         const y = H - gain * (H - 4) - 2;
         px === 0 ? canCtx.moveTo(0, y) : canCtx.lineTo(px, y);
     }
@@ -887,7 +957,6 @@ function drawViz(cutoff) {
     canCtx.lineWidth = 1.5;
     canCtx.stroke();
 
-    // cutoff marker line
     canCtx.beginPath();
     canCtx.moveTo(cutX, 0); canCtx.lineTo(cutX, H);
     canCtx.strokeStyle = 'rgba(244,114,182,0.35)';
@@ -897,9 +966,10 @@ function drawViz(cutoff) {
     canCtx.setLineDash([]);
 }
 
-// init
+// ── Init ─────────────────────────────────────────────
 drawViz(20000);
 cutoffSlider.style.setProperty('--pct', '100%');
+preloadAll();
 </script>
 </body>
 </html>
